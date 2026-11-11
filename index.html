@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0b0a12">
+<title>Virus Waves 2D</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/arsenal.css">
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <!-- ============ ANÚNCIO SETEC ============ -->
+  <aside id="setecAd" class="setec-ad" aria-label="Anúncio SETEC 2026">
+    <div class="setec-ad-head">
+      <span>📢 ANÚNCIO</span>
+      <button id="closeSetecAd" class="setec-ad-close" type="button"
+              aria-label="Fechar anúncio" title="Fechar anúncio">×</button>
+    </div>
+    <img src="assets/anuncio_setec.jpeg" alt="XI SETEC 2026: Prototipando Inovações, IA e Criação Autoral no Desenvolvimento de Sistemas">
+  </aside>
+
+
+  <!-- ============ HUD ============ -->
+  <div id="hud" class="hidden">
+    <div id="joy"><div id="joyBase"><div id="joyKnob"></div></div></div>
+    <div class="hud-top">
+      <div class="hud-left">
+        <div class="bar hp"><i id="hpFill"></i><span id="hpText">100/100</span></div>
+        <div class="bar xp"><i id="xpFill"></i><span id="xpText">0/10</span></div>
+      </div>
+      <div class="hud-center">
+        <div id="timer">00:00</div>
+        <div id="waveInfo">FASE 1 · SALA 1/8</div>
+        <div id="worldInfo" class="hidden"></div>
+      </div>
+      <div class="hud-right">
+        <div class="stat"><b>⚔</b><span id="kills">0</span></div>
+        <div class="stat"><b>🪙</b><span id="money">0</span></div>
+        <div class="stat"><b>💎</b><span id="gems">0</span></div>
+        <button id="btnPause" class="mini-btn">II</button>
+        <button id="btnArsenal" class="mini-btn" title="Arsenal (Esc)">🛠</button>
+      </div>
+    </div>
+
+    <div id="weaponsBar"></div>
+    <div id="relicBar"></div>
+
+    <div id="chestPrompt" class="hidden">
+      <b>📦 BAÚ</b> <span id="chestCost">30 moedas</span>
+      <button id="btnOpenChest">ABRIR</button>
+    </div>
+
+    <div id="fusionBanner" class="hidden">🔮 FUSÃO DISPONÍVEL — SUBIU DE NÍVEL!</div>
+    <div id="roomBanner" class="hidden"></div>
+    <div id="bossBar" class="hidden"><i id="bossFill"></i><span id="bossName">BOSS</span></div>
+    <div id="tutStep" class="hidden"></div>
+
+    <div id="touchHint" class="hidden">arraste na esquerda para mover • toque à direita no baú • ataque é automático</div>
+  </div>
+
+  <!-- ============ TUTORIAL OVERLAY (dentro do jogo) ============ -->
+  <div id="tutOverlay" class="hidden">
+    <div class="tut-box">
+      <div class="tut-step">ETAPA <span id="tutNum">1</span>/4</div>
+      <h3 id="tutTit">Bem-vindo!</h3>
+      <p id="tutTxt">Use <b>WASD</b> ou as <b>setas</b> para andar pelo mapa.</p>
+      <button id="btnTutNext" class="big-btn">ENTENDI!</button>
+    </div>
+  </div>
+
+  <!-- ============ TELA INICIAL ============ -->
+  <section id="menu" class="screen ts">
+    <div class="ts-atmo" aria-hidden="true">
+      <div class="ts-halo"></div>
+      <div class="ts-fog ts-fog-a"></div>
+      <div class="ts-fog ts-fog-b"></div>
+      <div class="ts-fog ts-fog-c"></div>
+      <div class="ts-floorglow"></div>
+      <div class="ts-motes" id="tsMotes"></div>
+    </div>
+
+    <header class="ts-head">
+      <h1 class="ts-logo" aria-label="Virus Waves">
+        <span class="ts-w1">VIRUS</span>
+        <span class="ts-w2">WAVES</span>
+      </h1>
+      <p class="ts-tag">Sobreviva às ondas infinitas</p>
+    </header>
+
+    <div class="ts-hero-space" aria-hidden="true"></div>
+
+    <div class="ts-menu">
+      <button id="btnPlay" class="ts-play"><i class="ts-play-txt">JOGAR</i><em class="ts-play-sub">escolher modo</em></button>
+
+      <nav class="ts-nav" aria-label="menus secundários">
+        <button id="btnChars" class="ts-nav-b"><i>🧙</i><b>PERSONAGENS</b></button>
+        <button id="btnSkins" class="ts-nav-b"><i>🧑‍🎨</i><b>SKINS</b></button>
+        <button id="btnShop" class="ts-nav-b"><i>💎</i><b>LOJA</b></button>
+        <button id="btnTut" class="ts-nav-b"><i>⌨</i><b>TUTORIAL</b></button>
+        <button id="btnAcess" class="ts-nav-b"><i>♿</i><b>ACESSIBILIDADE</b></button>
+      </nav>
+    </div>
+
+    <div class="ts-info" id="menuBuild" aria-label="informações do jogador"></div>
+
+    <footer class="ts-foot">
+      <span class="ts-credit">JOAO LENO</span>
+      <span class="ts-vers">v2.0</span>
+      <button id="btnCodeOpen" class="ts-foot-b" title="digitar código secreto">🔑 CÓDIGO</button>
+    </footer>
+
+    <!-- código secreto: só abre pelo botão do rodapé -->
+    <div id="codeModal" class="ts-modal hidden" role="dialog" aria-modal="true">
+      <div class="codebox ts-modal-box" id="codeBox">
+        <label for="codeInput">🔑 CÓDIGO SECRETO</label>
+        <div class="code-row">
+          <input id="codeInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"
+                 maxlength="24" placeholder="digite e aperte Enter">
+          <button id="btnCode" class="mini-btn code-go">OK</button>
+        </div>
+        <p class="ts-modal-hint">Cada código vale uma vez só — sem espaço e sem acento.</p>
+        <button id="btnCodeClose" class="ts-modal-x" title="fechar">✕</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SELEÇÃO DE MODO ============ -->
+  <section id="modes" class="screen hidden ts ts-modes">
+    <div class="ts-atmo" aria-hidden="true">
+      <div class="ts-fog ts-fog-a"></div>
+      <div class="ts-fog ts-fog-b"></div>
+    </div>
+    <header class="ts-head compact">
+      <h2 class="ts-h2">ESCOLHA SUA <span class="ts-h2-hl">ONDA</span></h2>
+      <p class="subtitle">Cada modo muda o desafio — as regras de inimigos, XP e gemas continuam as mesmas da partida.</p>
+    </header>
+
+    <div id="worldPanel" class="world-panel hidden"></div>
+
+    <div class="modes" id="modeList"></div>
+    <p class="ts-mode-detail" id="modeDetail"></p>
+
+    <div class="ts-mode-actions">
+      <button id="btnModeStart" class="ts-play small">INICIAR ONDA ▶</button>
+      <button id="btnModesBack" class="ts-nav-b solo">◀ VOLTAR</button>
+    </div>
+  </section>
+
+  <!-- ============ SKINS ============ -->
+  <section id="skins" class="screen hidden">
+    <h2>🧑‍🎨 SKINS <small id="skinsGems">0</small> 💎</h2>
+    <p class="subtitle">A skin é a aparência do seu personagem. Cada personagem comprado traz a skin dele de graça; as extras se compram com gemas. Algumas dão um bônus.</p>
+    <div class="skin-grid" id="skinGrid"></div>
+    <button id="btnSkinsBack" class="big-btn">◀ VOLTAR</button>
+  </section>
+
+  <!-- ============ LOJA ============ -->
+  <section id="shop" class="screen hidden">
+    <h2>💎 LOJA DE GEMAS <small id="shopGems">0</small></h2>
+    <p class="subtitle">Melhorias permanentes (valem só nesta sessão)</p>
+    <div class="shop-grid" id="shopGrid"></div>
+    <button id="btnChars2" class="big-btn alt">🧙 PERSONAGENS</button>
+    <button id="btnShopBack" class="big-btn">◀ VOLTAR</button>
+  </section>
+
+  <!-- ============ ACESSIBILIDADE ============ -->
+  <section id="acesso" class="screen hidden">
+    <h2>♿ ACESSIBILIDADE</h2>
+    <p class="subtitle">Ajuste o jogo do seu jeito. Tudo aqui é opcional e fica salvo no navegador — e <b>não</b> é apagado quando o progresso é resetado.</p>
+    <div class="acc-wrap" id="accGrid"></div>
+    <div class="acc-foot">
+      <button id="btnAccReset" class="big-btn alt">↺ VOLTAR AO PADRÃO</button>
+      <button id="btnAccBack" class="big-btn">◀ VOLTAR</button>
+    </div>
+  </section>
+
+  <!-- ============ PERSONAGENS ============ -->
+  <section id="chars" class="screen hidden">
+    <h2>🧙 PERSONAGENS <small id="charsGems">0</small> 💎</h2>
+    <p class="subtitle">Jogando, você <b>destrava</b> personagens. Depois é só <b>comprar</b> com gemas para usar. Cada personagem destrava <b>uma arma</b> a mais para a partida.</p>
+    <div class="char-grid" id="charGrid"></div>
+    <button id="btnCharsBack" class="big-btn">◀ VOLTAR</button>
+  </section>
+
+  <!-- ============ TUTORIAL ============ -->
+  <section id="tutorial" class="screen hidden">
+    <h2>⌨ TUTORIAL <small>COMO JOGAR</small></h2>
+    <p class="subtitle">O básico para não morrer na 1ª onda: mover, pausar, abrir baú e escolher melhorias. As armas atiram sozinhas.</p>
+
+    <div class="tut-grid">
+      <div class="tut-card">
+        <div class="tut-ico">🕹️</div>
+        <div class="tut-tit">Mover</div>
+        <div class="tut-desc">No teclado: <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ou as <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd>.<br>No celular: arraste o dedo na <b>metade esquerda</b> da tela para aparecer o joystick.</div>
+      </div>
+
+      <div class="tut-card star">
+        <div class="tut-ico">⚔️</div>
+        <div class="tut-tit">Atacar — é automático</div>
+        <div class="tut-desc"><b>Não existe tecla de ataque.</b> Suas armas dissozinhas e miram sozinhas no inimigo mais perto. Você só precisa <b>se mover bem</b> para as balas acertarem e para não ser cercado.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">⏸️</div>
+        <div class="tut-tit">Pausar</div>
+        <div class="tut-desc">Aperte <kbd>P</kbd> ou <kbd>Esc</kbd> — ou toque no botão <b>II</b> no canto superior direito do HUD.<br>Na pausa você vê o tempo, nível, abates, moedas e armas. <b>CONTINUAR</b> volta pro jogo, <b>ABANDONAR</b> sai e salva o progresso.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">📦</div>
+        <div class="tut-tit">Abrir o baú</div>
+        <div class="tut-desc"><kbd>E</kbd> ou simplesmente <b>encoste</b> nele e aperte ABRIR. No celular: <b>toque na metade direita</b> da tela.<br>O baú custa <b>moedas</b> e pode dar arma nova, evolução ou fusão.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">⬆️</div>
+        <div class="tut-tit">Subir de nível</div>
+        <div class="tut-desc">Colete as <b>💎 gemas</b> (XP) que os inimigos deixam. Ao subir, o jogo pausa sozinho e mostra 4 cartas: <b>clique</b> na que quiser ou tecle <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> <kbd>4</kbd>.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">🔮</div>
+        <div class="tut-tit">Fundir armas</div>
+        <div class="tut-desc">Duas armas <b>no nível 3</b> liberam a fusão: aparece o aviso <b>FUSÃO DISPONÍVEL</b> e uma carta dourada no próximo level-up. Fusão é bem mais forte que subir de nível.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">🚪</div>
+        <div class="tut-tit">Ir pra próxima sala</div>
+        <div class="tut-desc">Mate todos os inimigos até a sala ficar <b>LIMPA</b>. Aí a <b>SAÍDA</b> (portal verde na parede da direita) abre — ande até ela.<br>Cuidado: a sala de trás é <b>apagada</b>, inimigos e itens não atravessam.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">✨</div>
+        <div class="tut-tit">Relíquias</div>
+        <div class="tut-desc">Procure o <b>pedestal com a coluna de luz</b>. Ele dá uma relíquia que <b>vale a partida toda</b> (dano, ímã, velocidade...). Vale sair do caminho para pegar.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">💎</div>
+        <div class="tut-tit">Gemas e XP</div>
+        <div class="tut-desc">O <b>ímã</b> puxa as gemas pertas; a mais longe te persegue devagar. Ao <b>limpar a sala</b>, todo o XP do chão é recolhido na hora — nada se perde.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">🧱</div>
+        <div class="tut-tit">Parede é parede</div>
+        <div class="tut-desc">Pilares e muros <b>bloqueiam tiro</b> — o seu e o dos inimigos. Use a parede de cobertura para descansar e recarregar o sangue.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">❤️</div>
+        <div class="tut-tit">Sobreviver</div>
+        <div class="tut-desc">Nunca pare de andar. O <b>dano recebido</b> só cai com armadura/bônus da loja. Se a vida baixar, fuja para girar a horda e deixar as armas trabalharem.</div>
+      </div>
+
+      <div class="tut-card">
+        <div class="tut-ico">🧭</div>
+        <div class="tut-tit">O resto do menu</div>
+        <div class="tut-desc"><b>LOJA</b>: melhorias com gemas · <b>PERSONAGENS</b>: cada um dá uma arma extra · <b>SKINS</b>: visual (algumas com bônus) · <b>ACESSIBILIDADE</b>: tamanho, volume e tremor · <b>🔑 CÓDIGO</b>: digitando no menu.</div>
+      </div>
+    </div>
+
+    <p class="hint">Resumo: <b>mova-se</b> (WASD/setas) · ataque é <b>automático</b> · pause com <b>P</b> ou <b>Esc</b> · baú com <b>E</b> · level-up com <b>1-4</b></p>
+
+    <details class="codex" id="tutCodex">
+      <summary>📖 Armas, fusões, relíquias e personagens (clique para ver)</summary>
+      <h3>🗡️ Armas — cada personagem destrava uma a mais</h3>
+      <div id="codexWeapons" class="cx-grid"></div>
+      <h3>🔮 Fusões — as 2 armas precisam chegar no nível 3</h3>
+      <div id="codexFusions" class="cx-grid"></div>
+      <h3>✨ Relíquias — ache o pedestal dentro das salas (5% SETEC, ~34% nas outras)</h3>
+      <div id="codexRelics" class="relic-grid"></div>
+      <h3>🧙 Personagens</h3>
+      <div id="codexChars" class="cx-grid"></div>
+    </details>
+
+    <button id="btnTutBack" class="big-btn">◀ VOLTAR</button>
+  </section>
+
+  <!-- ============ LEVEL UP ============ -->
+  <section id="levelup" class="screen hidden overlay">
+    <h2 class="lv-title">SUBIU DE NÍVEL! <small id="lvNum">2</small></h2>
+    <p class="subtitle">Escolha 1 melhoria</p>
+    <div class="cards" id="cards"></div>
+  </section>
+
+  <!-- ============ PAUSA ============ -->
+  <section id="pause" class="screen hidden overlay">
+    <h2>PAUSADO</h2>
+    <div class="pause-stats" id="pauseStats"></div>
+    <button id="btnResume" class="big-btn">▶ CONTINUAR</button>
+    <button id="btnQuit" class="big-btn alt">✖ ABANDONAR</button>
+  </section>
+
+  <!-- ============ FIM DE PARTIDA ============ -->
+  <section id="gameover" class="screen hidden overlay">
+    <h2 id="overTitle">VOCÊ MORREU</h2>
+    <p class="subtitle" id="overMode">Modo Infinito</p>
+    <div class="results" id="results"></div>
+    <div class="gained" id="gained">💎 +0 gemas</div>
+    <button id="btnShop2" class="big-btn">💎 GASTAR GEMAS</button>
+    <button id="btnMenu" class="big-btn alt">◀ MENU</button>
+  </section>
+
+  <!-- ============ ARSENAL ============ -->
+  <section id="arsenal" class="screen hidden overlay">
+    <div class="ars-panel">
+      <div class="ars-head">
+        <div class="ars-title">🛠 ARSENAL</div>
+        <div class="ars-money">
+          <span class="ars-chip gold">🪙 <span id="arsMoney">0</span></span>
+          <span class="ars-chip gem">💎 <span id="arsGems">0</span></span>
+          <span class="ars-chip cut" id="arsSlots">⚔️ 0/0 slots</span>
+        </div>
+        <button id="arsClose" class="ars-x">✕ FECHAR (Esc)</button>
+      </div>
+
+      <div class="ars-tabs">
+        <button id="arsTabBank" class="ars-tab on">⚔️ ARSENAL</button>
+        <button id="arsTabShop" class="ars-tab">🪙 LOJA</button>
+      </div>
+
+      <div class="ars-scroll">
+        <div id="arsBankView" class="ars-view">
+          <div class="ars-sect-title">EQUIPADAS <span class="ars-info" id="arsSlotInfo"></span></div>
+          <div class="ars-grid" id="arsEquipped"></div>
+          <div class="ars-sect-title">INVENTÁRIO <span class="ars-info" id="arsInvInfo"></span></div>
+          <div class="ars-grid" id="arsInv"></div>
+          <p class="ars-note">🔮 FUNDIR junta duas armas IGUAIS (mesmo id e mesma raridade) numa de raridade acima · vender pede confirmação · clique fora fecha</p>
+        </div>
+
+        <div id="arsShopView" class="ars-view hidden">
+          <div class="ars-shopbar">
+            <div class="ars-sect-title" style="flex:1">LOJA DE ARMAS — 6 ofertas</div>
+            <button id="arsReroll" class="ars-reroll">🎲 TROCAR OFERTAS — 🪙 <span id="arsRerollCost">8</span></button>
+          </div>
+          <div class="ars-grid" id="arsShop"></div>
+          <p class="ars-note">As ofertas ficam melhores conforme a FASE. Comprar já equipa se houver slot livre.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="arsConfirm" class="ars-confirm hidden">
+      <div class="ars-conf-box">
+        <div id="arsConfTitle">🪙 VENDER ARMA?</div>
+        <div id="arsConfDesc"></div>
+        <div class="ars-conf-btns">
+          <button id="arsConfOk" class="abtn warn">✔ VENDER</button>
+          <button id="arsConfNo" class="abtn">✕ CANCELAR</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="toast"></div>
+</div>
+
+<script src="js/utils.js"></script>
+<script src="js/data.js"></script>
+<script src="js/save.js"></script>
+<script src="js/chars.js"></script>
+<script src="js/input.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/access.js"></script>
+<script src="js/mechanics.js"></script>
+<script src="js/game.js"></script>
+<script src="js/arsenal.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
